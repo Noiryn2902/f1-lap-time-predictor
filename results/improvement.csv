@@ -1,0 +1,5 @@
+split,algorithm,baseline,enhanced,rmse_gain,rmse_gain_pct
+random,LinearRegression,0.9155,0.708,0.2075,22.665
+random,RandomForest,0.6366,0.488,0.1487,23.3507
+stint,LinearRegression,1.0714,0.9068,0.1645,15.3559
+stint,RandomForest,1.5794,1.137,0.4424,28.0126

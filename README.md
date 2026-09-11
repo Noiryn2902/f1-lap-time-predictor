@@ -30,7 +30,7 @@ project reports both splits side by side to show the size of that illusion.
 | 2 | Cleaning: pit laps, out-laps, outliers | Done |
 | 3 | Feature engineering: tire age, stint, degradation shape | Done |
 | 4 | Stint-based split plus random-split control | Done |
-| 5 | Model comparison: baseline vs tire-aware | Pending |
+| 5 | Model comparison: baseline vs tire-aware | Done |
 | 6 | Figures | Pending |
 | 7 | Write-up | Pending |
 
@@ -289,13 +289,105 @@ Neither split lets a lap appear in both sets; `assert_disjoint` checks it.
 
 ### Models and metrics
 
-Pending.
+Two feature sets, two algorithms, two splits.
+
+| Feature set | Columns |
+| :--- | :--- |
+| `baseline` | `grid`, `lap` |
+| `enhanced` | `grid`, `lap`, `tire_age`, `tire_age_sq`, `stint_number` |
+
+`LinearRegression` was chosen for interpretability: its coefficients read
+directly in seconds, and it extrapolates, which matters because held-out stints
+reach tire ages beyond the training range. `RandomForestRegressor` was chosen
+as a contrasting non-linear learner.
 
 ---
 
 ## Results
 
-Pending.
+`results/model_comparison.csv` holds the full table.
+
+| Split | Features | Algorithm | RMSE | MAE |
+| :--- | :--- | :--- | ---: | ---: |
+| **stint** | baseline | LinearRegression | 1.071 | 0.866 |
+| **stint** | **enhanced** | **LinearRegression** | **0.907** | **0.703** |
+| stint | baseline | RandomForest | 1.579 | 1.300 |
+| stint | enhanced | RandomForest | 1.137 | 0.938 |
+| random | baseline | LinearRegression | 0.915 | 0.742 |
+| random | enhanced | LinearRegression | 0.708 | 0.543 |
+| random | baseline | RandomForest | 0.637 | 0.417 |
+| random | enhanced | RandomForest | 0.488 | 0.379 |
+
+![Model comparison](figures/05_model_comparison.png)
+
+### Finding 1 — tire age helps, in every pairing
+
+| Split | Algorithm | Baseline RMSE | Enhanced RMSE | Gain |
+| :--- | :--- | ---: | ---: | ---: |
+| stint | LinearRegression | 1.071 | 0.907 | **15.4%** |
+| stint | RandomForest | 1.579 | 1.137 | 28.0% |
+| random | LinearRegression | 0.915 | 0.708 | 22.7% |
+| random | RandomForest | 0.637 | 0.488 | 23.4% |
+
+**The headline number is 15.4%**, from the stint split with linear regression.
+That is the one measured without leakage, so it is the one worth quoting.
+
+### Finding 2 — the leak reverses the verdict, it does not merely flatter it
+
+This is the most important result in the project.
+
+| Split | LinearRegression | RandomForest | Apparent winner |
+| :--- | ---: | ---: | :--- |
+| Random (leaky) | 0.708 | **0.488** | RandomForest, by 31% |
+| Stint (honest) | **0.907** | 1.137 | LinearRegression, by 20% |
+
+A random split does not just report an over-optimistic score. It would lead to
+shipping the **wrong model**. RandomForest looks like the clear winner under
+leakage and is in fact the worse of the two once the leak is closed.
+
+The mechanism is direct. A tree predicts by averaging the training points that
+fall in the same leaf. When 95.1% of test laps have an immediate neighbour in
+training, the nearest leaf already contains nearly the answer, so memorisation
+scores extremely well. RandomForest's score is inflated **57%** by the leak;
+the linear model's by **22%**. The more flexible learner is the one the leak
+rewards most, which is what makes a flexible model plus a careless split so
+dangerous.
+
+### Finding 3 — RandomForest loses honestly because it cannot extrapolate
+
+| Training max tire age | Test max tire age | Test laps beyond training range |
+| ---: | ---: | ---: |
+| 25 | 34 | 15 of 162 |
+
+Final stints run longer than earlier ones, so the stint split necessarily asks
+for extrapolation. A tree cannot extend a trend: past the edge of its training
+range every branch returns its nearest leaf, so the prediction flattens exactly
+where degradation is steepest. A linear model keeps extending its slope, which
+is the correct behaviour here. This is a limitation of the split as much as of
+the tree, and it is reported rather than engineered away.
+
+### What the linear model learned
+
+| Effect | Coefficient | Reading |
+| :--- | ---: | :--- |
+| `tire_age` | **+0.127 s/lap** | each extra lap on a set costs about an eighth of a second |
+| `lap` | **-0.085 s/lap** | fuel burn and track evolution give back about a twelfth of a second per lap |
+| `grid` | +0.211 s/place | a car starting one place further back is about a fifth of a second slower |
+
+**The two effects are separated, which is what the project set out to do.** Tire
+wear and fuel burn nearly cancel: net visible degradation is about 0.042s per
+lap, roughly 0.8s over a 20-lap stint. Phase 3 measured raw observed
+degradation at 1.10s across 21 laps of tire age, so the two agree.
+
+That near-cancellation is exactly why the baseline needs `lap`. Without it, tire
+wear and fuel burn would be confounded and the measured degradation would be
+wrong by a factor of three.
+
+**The quadratic term did almost nothing.** `tire_age_sq` comes out at -0.0002,
+so the marginal cost of one more lap falls only from 0.126s at age 1 to 0.119s
+at age 20. Degradation at this race is very nearly linear across the range
+observed. The term was worth including to test for a curve, and the honest
+result is that there is barely one.
 
 ---
 

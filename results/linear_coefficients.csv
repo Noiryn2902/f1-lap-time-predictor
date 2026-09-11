@@ -1,0 +1,11 @@
+feature,coefficient_s
+grid,0.21141
+lap,-0.08456
+tire_age,0.12665
+tire_age_sq,-0.0002
+stint_number,-0.07521
+marginal cost at tire age 1,0.12626
+marginal cost at tire age 5,0.12468
+marginal cost at tire age 10,0.1227
+marginal cost at tire age 15,0.12073
+marginal cost at tire age 20,0.11875
