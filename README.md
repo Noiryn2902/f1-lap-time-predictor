@@ -28,7 +28,7 @@ project reports both splits side by side to show the size of that illusion.
 | 0 | Environment, repository scaffold, dataset | Done |
 | 1 | Race selection and lap extraction | Done |
 | 2 | Cleaning: pit laps, out-laps, outliers | Done |
-| 3 | Feature engineering: tire age, stint, fuel proxy | Pending |
+| 3 | Feature engineering: tire age, stint, degradation shape | Done |
 | 4 | Stint-based split plus random-split control | Pending |
 | 5 | Model comparison: baseline vs tire-aware | Pending |
 | 6 | Figures | Pending |
@@ -188,7 +188,62 @@ each stint, which is tire wear. Separating those two is the whole problem.
 
 ### Features
 
-Pending.
+Three features are derived. A fourth was planned and deliberately dropped.
+
+| Feature | Meaning |
+| :--- | :--- |
+| `stint_number` | Which set of tires, counting from 1. Teams run different compounds in different stints, so this carries compound information the dataset does not expose directly. |
+| `tire_age` | Laps completed on the current set, resetting at each stop. The feature the project exists to test. |
+| `tire_age_sq` | Tire age squared. A set loses little early and falls away faster once the surface is gone. A linear term alone cannot bend to that. |
+
+**The fuel proxy was dropped, and that is the finding.** The plan was to add
+`fuel_proxy = total_laps - lap` so the model could separate fuel burn from tire
+wear. Within a single race `total_laps` is constant, which makes that column an
+exact linear transform of `lap`. Their measured correlation is **-1.000**. The
+two carry identical information, and in a linear model the pair is perfectly
+collinear, so the coefficients stop being identifiable.
+
+The useful conclusion runs the other way:
+
+> Within one race, **lap number already is the fuel proxy.** It also absorbs
+> track evolution as rubber goes down. Both effects are monotonic in lap number
+> and cannot be separated from it without data from more than one race.
+
+This is what makes the Phase 5 comparison fair. The baseline already has
+`lap_number`, so it already controls for fuel burn and track evolution. Any
+improvement from `tire_age` is therefore attributable to the tires rather than
+to a fuel effect the baseline was missing.
+
+`results/fuel_collinearity.csv` records the check.
+
+**Correlations with lap time**
+
+| Feature | Correlation |
+| :--- | ---: |
+| `stint_number` | -0.724 |
+| `lap` | -0.623 |
+| `grid` | +0.467 |
+| `tire_age` | +0.172 |
+| `tire_age_sq` | +0.144 |
+
+The signs are the whole story. Lap number is negative, because fuel burn and
+track evolution make the cars faster as the race runs. Tire age is positive,
+because degradation makes them slower. The two effects work against each other,
+which is exactly why the baseline needs `lap_number` for the comparison to mean
+anything.
+
+![Degradation by tire age](figures/03_degradation_by_tire_age.png)
+
+Averaged across every stint, a set of tires costs **1.10s** between its first
+lap and its twenty-first. The right-hand panel separates the stints: each sits
+at a lower level than the one before, which is fuel burn, and each still rises
+within itself, which is tire wear.
+
+**Tire age resets correctly in every stint.** Tire age is 0 on the out-lap and
+1 on the lap after. Cleaning removes every out-lap, and removes lap 1 which is
+the opening stint's equivalent, so all 23 surviving stints begin at 1. Albon
+has no first stint at all: he pitted on lap 2, so his opening stint is lap 1
+alone and cleaning removes it. That is the data behaving correctly.
 
 ### Splitting strategy
 

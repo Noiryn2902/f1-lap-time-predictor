@@ -1,0 +1,2 @@
+feature_a,feature_b,correlation,verdict
+lap,fuel_proxy = total_laps - lap,-1.0,"perfectly collinear, fuel_proxy adds no information"
