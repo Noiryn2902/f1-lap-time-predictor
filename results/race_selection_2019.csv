@@ -1,0 +1,22 @@
+raceId,total_laps,wet_score,disruption,max_spike,attrition,usable_drivers,median_lap_s,round,name,viable,rank_score
+1021,70,0.0369,0.0,1.139,1,14,83.13,12,Hungarian Grand Prix,True,0.0369
+1028,56,0.0373,0.0,1.073,1,15,101.8,19,United States Grand Prix,True,0.0373
+1018,71,0.0375,0.0,1.115,0,17,70.05,9,Austrian Grand Prix,True,0.0375
+1030,55,0.0369,0.0009,1.085,1,17,104.34,21,Abu Dhabi Grand Prix,True,0.0378
+1026,52,0.0382,0.0,1.066,1,15,96.11,17,Japanese Grand Prix,True,0.0382
+1016,70,0.0388,0.0008,1.149,1,15,77.43,7,Canadian Grand Prix,True,0.0396
+1017,53,0.0407,0.0,1.138,1,17,96.85,8,French Grand Prix,True,0.0407
+1010,58,0.0433,0.0019,1.135,1,15,89.37,1,Australian Grand Prix,True,0.0452
+1012,56,0.051,0.0,1.203,1,15,99.81,3,Chinese Grand Prix,False,0.051
+1023,53,0.0606,0.0,1.25,1,16,85.71,14,Italian Grand Prix,False,0.0606
+1013,51,0.0618,0.0011,1.263,2,14,108.32,4,Azerbaijan Grand Prix,False,0.0629
+1027,71,0.0689,0.0015,1.307,1,14,81.97,18,Mexican Grand Prix,False,0.0704
+1011,57,0.0794,0.0028,1.345,3,15,98.09,2,Bahrain Grand Prix,False,0.0822
+1015,78,0.0895,0.0047,1.413,1,18,78.58,6,Monaco Grand Prix,False,0.09419999999999999
+1019,52,0.1149,0.0208,1.476,1,17,91.75,10,British Grand Prix,False,0.1357
+1029,71,0.1342,0.0326,1.789,3,16,74.82,20,Brazilian Grand Prix,False,0.1668
+1020,64,0.1572,0.0114,1.437,1,13,93.39,11,German Grand Prix,False,0.1686
+1014,66,0.1313,0.0385,1.56,2,18,83.74,5,Spanish Grand Prix,False,0.1698
+1024,61,0.1493,0.0542,1.525,1,17,109.25,15,Singapore Grand Prix,False,0.2035
+1022,44,0.1516,0.0612,1.613,1,17,110.76,13,Belgian Grand Prix,False,0.21280000000000002
+1025,53,0.1591,0.0622,1.579,1,15,100.84,16,Russian Grand Prix,False,0.2213

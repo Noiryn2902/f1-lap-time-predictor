@@ -26,7 +26,7 @@ project reports both splits side by side to show the size of that illusion.
 | Phase | Description | State |
 | :---- | :---------- | :---- |
 | 0 | Environment, repository scaffold, dataset | Done |
-| 1 | Race selection and lap extraction | Pending |
+| 1 | Race selection and lap extraction | Done |
 | 2 | Cleaning: pit laps, out-laps, outliers | Pending |
 | 3 | Feature engineering: tire age, stint, fuel proxy | Pending |
 | 4 | Stint-based split plus random-split control | Pending |
@@ -84,7 +84,70 @@ _Filled in as each phase completes._
 
 ### Race selection
 
-Pending.
+**Chosen: the 2019 United States Grand Prix, Circuit of the Americas, 56 laps.**
+
+The brief asks for a dry race with no red flags. Rather than picking one from
+reputation, every 2019 race was scored on four signals visible in the lap data
+itself: lap-time variation as a wetness proxy, the share of laps beyond 1.5x
+the field median, the slowest field-median lap relative to the race median, and
+mid-race attrition. `src/race_selection.py` does the scoring and
+`results/race_selection_2019.csv` holds the full table.
+
+Austin wins on the measurements that matter:
+
+| Signal | Austin | Season position |
+| :--- | ---: | :--- |
+| Slowest lap, as a multiple of race median | 1.073 | lowest of 21 |
+| Lap-time variation (wetness proxy) | 0.0373 | 2nd lowest |
+| Laps beyond 1.5x the field median | 0.0000 | joint lowest |
+| Mid-race retirements | 1 | joint lowest |
+
+Eight races survive the filter. The tiebreaker is experimental design. Most
+Austin finishers ran three stints, which gives two training stints and one
+held-out final stint per driver at roughly a 60/40 split of laps. The 2019
+Austrian Grand Prix scores just as clean, but almost every driver ran a single
+stop, leaving one training stint each and a test set larger than the training
+set.
+
+**Two measurement traps, both of which changed the answer.** A first pass
+measured red flags as the largest drop in cars circulating between consecutive
+laps. That flags nearly every clean race, because the leader finishes before
+the cars they lapped, so the field appears to collapse at the flag; attrition
+is now measured only up to three laps from the end. Separately, with wetness
+used only to rank rather than to filter, the 2019 German Grand Prix passed:
+its disruption and attrition are low, yet it was the wettest race of the
+season, with 78 pit stops.
+
+**Why not Bahrain.** It is the natural first choice and it fails the filter, on
+a 1.345x lap spike and three mid-race retirements. That is the late safety car
+and the leader's engine failure, and those laps would carry neutralised running
+that has nothing to do with tire wear.
+
+### Drivers
+
+Eight, the highest finishers who were classified, ran within one lap of the
+full distance, made at least two stints, and had at least 10 laps in the final
+stint and 20 before it.
+
+| Code | Driver | Grid | Finish | Stints | Train laps | Test laps |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: |
+| BOT | Bottas | 1 | 1 | 3 | 35 | 21 |
+| HAM | Hamilton | 5 | 2 | 2 | 24 | 32 |
+| VER | Verstappen | 3 | 3 | 3 | 34 | 22 |
+| LEC | Leclerc | 4 | 4 | 3 | 42 | 14 |
+| ALB | Albon | 6 | 5 | 4 | 40 | 16 |
+| RIC | Ricciardo | 9 | 6 | 2 | 21 | 35 |
+| NOR | Norris | 8 | 7 | 3 | 42 | 14 |
+| HUL | Hülkenberg | 11 | 9 | 3 | 39 | 17 |
+
+447 laps in total, uncleaned median 100.861s.
+
+![Raw lap times](figures/01_raw_lap_times.png)
+
+The raw trace shows the expected sawtooth: pace decaying through each stint,
+a tall spike on the lap the car pitted, then the pattern restarting on fresh
+tires. The spikes are staggered across drivers rather than aligned, which is
+the visual confirmation that no safety car neutralised the race.
 
 ### Cleaning
 
