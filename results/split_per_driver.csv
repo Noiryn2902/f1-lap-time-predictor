@@ -1,0 +1,9 @@
+code,train_laps,test_laps,held_out_stint,test_tire_age_max
+ALB,35,15,4,15
+BOT,31,20,3,20
+HAM,22,31,2,31
+HUL,35,15,3,15
+LEC,38,13,3,13
+NOR,38,13,3,13
+RIC,19,34,2,34
+VER,30,21,3,21

@@ -29,7 +29,7 @@ project reports both splits side by side to show the size of that illusion.
 | 1 | Race selection and lap extraction | Done |
 | 2 | Cleaning: pit laps, out-laps, outliers | Done |
 | 3 | Feature engineering: tire age, stint, degradation shape | Done |
-| 4 | Stint-based split plus random-split control | Pending |
+| 4 | Stint-based split plus random-split control | Done |
 | 5 | Model comparison: baseline vs tire-aware | Pending |
 | 6 | Figures | Pending |
 | 7 | Write-up | Pending |
@@ -247,7 +247,45 @@ alone and cleaning removes it. That is the data behaving correctly.
 
 ### Splitting strategy
 
-Pending.
+Two splits are built. One is used to draw conclusions; the other exists only so
+its failure can be measured.
+
+**Stint split.** Each driver's final stint is held out and everything before it
+trains. A stint is a contiguous block of laps on one set of tires, so holding
+one out asks the model to predict a run of the race it has never seen.
+
+**Random split.** Laps shuffled and cut 80/20, which is what a default
+`train_test_split` call produces.
+
+| Split | Train | Test | Test share | Test laps with a neighbour in training |
+| :--- | ---: | ---: | ---: | ---: |
+| Stint | 248 | 162 | 39.5% | **0.0%** |
+| Random | 328 | 82 | 20.0% | **95.1%** |
+
+**The last column names the mechanism.** Consecutive laps by the same driver on
+the same set of tires differ by a few tenths of a second. If laps 23 and 25 sit
+in training, predicting lap 24 is not prediction, it is interpolation between
+two nearly identical points, and any model will look excellent at it. Under the
+random split that situation holds for 95.1% of test laps.
+
+The stint split scores exactly zero by construction. A held-out stint is
+bounded by a pit stop on one side and the end of the race on the other, and
+cleaning already removed the laps at those boundaries, so nothing adjacent
+survives in training.
+
+![Split structure](figures/04_split_structure.png)
+
+The left panel holds out a solid block at the end of each driver's race. The
+right panel scatters test laps through the field, each surrounded by training
+laps. That picture is the leak.
+
+**Two costs the stint split pays, honestly.** It puts 39.5% of laps in the test
+set rather than the usual 20%, because a final stint is simply a large share of
+a race. And it forces extrapolation: held-out stints reach a tire age of 34,
+beyond much of what the training stints cover. Both make the stint split look
+worse on paper, and both are the reason its score can be believed.
+
+Neither split lets a lap appear in both sets; `assert_disjoint` checks it.
 
 ### Models and metrics
 
