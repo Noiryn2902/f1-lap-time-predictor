@@ -27,7 +27,7 @@ project reports both splits side by side to show the size of that illusion.
 | :---- | :---------- | :---- |
 | 0 | Environment, repository scaffold, dataset | Done |
 | 1 | Race selection and lap extraction | Done |
-| 2 | Cleaning: pit laps, out-laps, outliers | Pending |
+| 2 | Cleaning: pit laps, out-laps, outliers | Done |
 | 3 | Feature engineering: tire age, stint, fuel proxy | Pending |
 | 4 | Stint-based split plus random-split control | Pending |
 | 5 | Model comparison: baseline vs tire-aware | Pending |
@@ -151,7 +151,40 @@ the visual confirmation that no safety car neutralised the race.
 
 ### Cleaning
 
-Pending.
+37 of 447 laps removed, 8.3%, each attributable to a named rule.
+`results/cleaning_report.csv` holds the table.
+
+| Rule | Why | Laps |
+| :--- | :--- | ---: |
+| `pit_in` | The lap the car entered the pit lane, which contains the stop | 15 |
+| `pit_out` | The lap after, begun at pit-lane speed on cold tires | 15 |
+| `outlier` | Slower than 1.5x that driver's own median | 0 |
+| `lap_one` | The opening lap, begun from a standstill | 8 |
+| | **Total unique laps removed** | **37** |
+
+The outlier test uses each driver's own median rather than the field median, so
+a slower car is not penalised for being slower.
+
+**The outlier rule removes nothing, and that is the correct result.** It exists
+to catch safety cars and off-track moments. This race has neither, which is
+exactly why Phase 1 selected it. The threshold sits near 151s and the slowest
+green-flag lap is 47s clear of it. A count of zero is evidence the race
+selection worked, not evidence the rule was misapplied.
+
+**Lap 1 is an addition to the brief, not part of it.** It begins from a
+standstill and includes the first-corner scramble, making it 4.6s slower than a
+green-flag lap. That is a starting-procedure effect, not a tire effect. It
+matters more than an ordinary outlier because lap 1 is always run on brand new
+tires: keeping it would place a very slow lap at a tire age of zero for every
+driver and teach the model that fresh tires are slow, which inverts the effect
+being measured. Removing it also pulls the slowest remaining lap from 110.5s
+down to 104.6s.
+
+![Cleaning, before and after](figures/02_cleaning_before_after.png)
+
+The lower panel is what the models see. The sawtooth is gone. What remains is a
+gentle downward drift, which is fuel burn, overlaid with a repeating rise inside
+each stint, which is tire wear. Separating those two is the whole problem.
 
 ### Features
 

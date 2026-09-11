@@ -1,0 +1,7 @@
+reason,description,laps_flagged
+pit_in,Lap the car entered the pits,15
+pit_out,"Lap after a pit stop, on cold tires",15
+outlier,Slower than 1.5x that driver's median,0
+lap_one,"Opening lap, standing start",8
+TOTAL removed,unique laps (1 flagged by two rules at once),37
+REMAINING,8.3% of 447 laps removed,410
