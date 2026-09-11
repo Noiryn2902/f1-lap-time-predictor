@@ -327,6 +327,6 @@ Verified by deleting every figure and CSV and re-running all seven notebooks
 from scratch. All pass, all 7 figures and 12 tables regenerate, and every
 headline number was checked against the regenerated outputs.
 
-`scikit-learn` is pinned to 1.6.1. Release 1.9.1 ships an unsigned compiled
+REMOVEDUP
 extension that Windows Smart App Control blocks, which breaks every sklearn
 submodule import.

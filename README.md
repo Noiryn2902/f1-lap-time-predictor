@@ -137,10 +137,32 @@ join a compound source; add a per-driver intercept and a traffic feature.
 
 ```bash
 pip install -r requirements.txt
+```
+
+### Data
+
+The dataset is the Kaggle "Formula 1 World Championship (1950 to 2020)" by Rohan
+Rao, specifically `lap_times.csv`, `pit_stops.csv`, `results.csv` and
+`races.csv`. **No API is used anywhere in this project.** Every stage reads
+static CSV files from disk.
+
+Download the dataset from Kaggle and point the script at it:
+
+```bash
+python scripts/download_data.py --kaggle ~/Downloads/archive.zip
+```
+
+A folder works too. If you would rather not sign in to Kaggle, running it with
+no arguments fetches the same static CSV export from a public mirror of the
+Ergast database, which is the upstream source the Kaggle dataset republishes:
+
+```bash
 python scripts/download_data.py
 ```
 
-Then run the notebooks in order, or check any stage directly:
+Both routes produce identical tables and identical results.
+
+### Running it
 
 ```bash
 python src/race_selection.py
@@ -148,11 +170,27 @@ python src/cleaning.py
 python src/models.py
 ```
 
-The dataset is the Ergast Motor Racing Database CSV export, the upstream source
-of the Kaggle dataset "Formula 1 World Championship (1950 to 2020)" named in the
-brief. Ergast retired its own download endpoint, so `scripts/download_data.py`
-pulls the identical archive from a public mirror, which keeps the repository
-reproducible without Kaggle credentials.
+Or run the notebooks in order, `00` through `06`.
+
+### Pinned versions and seeds
+
+Dependencies are pinned in [`requirements.txt`](requirements.txt).
+
+Every stochastic step is seeded, so the numbers in this README reproduce exactly:
+
+| Setting | Value | Where |
+| :--- | :--- | :--- |
+| `RANDOM_SEED` | `42` | `src/splits.py`, the random-split control |
+| `RANDOM_SEED` | `42` | `src/models.py`, `RandomForestRegressor(random_state=...)` |
+| `RANDOM_TEST_FRACTION` | `0.2` | `src/splits.py` |
+| `n_estimators` | `300` | `src/models.py` |
+| `min_samples_leaf` | `2` | `src/models.py` |
+
+The stint split is deterministic by construction and uses no seed.
+
+`scikit-learn` is pinned to 1.6.1 rather than the latest release: 1.9.1 ships an
+unsigned compiled extension that Windows Smart App Control blocks, which breaks
+every `sklearn` submodule import.
 
 **A note on `races.csv`:** the published archive ships a header listing 8
 columns while every data row carries 18. Pandas' default read silently shifts
@@ -174,5 +212,6 @@ from scratch.
 
 ---
 
-Data: Ergast Motor Racing Database, 1950 to March 2022, mirrored at
+Data: Kaggle "Formula 1 World Championship (1950 to 2020)" by Rohan Rao, which
+republishes the Ergast Motor Racing Database. Mirror used by the fallback path:
 [rubenv/ergast-mrd](https://github.com/rubenv/ergast-mrd). Non-commercial use.
