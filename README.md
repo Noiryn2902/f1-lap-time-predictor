@@ -19,6 +19,29 @@ train/test split on lap data leaks: consecutive laps are nearly identical, so a
 model tested on lap 24 has almost certainly trained on laps 23 and 25. This
 project reports both splits side by side to show the size of that illusion.
 
+## The answer
+
+**Yes, and the improvement survives an honest split.** Measured on held-out
+final stints, adding tire age cuts RMSE from 1.071s to 0.907s, a 15.4%
+improvement, and the linear model attributes **+0.127s per lap** to tire wear
+against **-0.085s per lap** returned by fuel burn. The two effects nearly
+cancel, which is why they have to be modelled together.
+
+**Three findings beyond the brief:**
+
+1. **A random split reverses the verdict, it does not merely flatter it.** Under
+   a random split RandomForest looks 31% better than linear regression. Under
+   the honest split linear regression is 20% better than RandomForest. A
+   careless split would lead to shipping the wrong model, not just to quoting an
+   optimistic number.
+2. **The leak is measured, not asserted.** 95.1% of randomly-split test laps
+   have an immediately adjacent lap sitting in the training set. Under the stint
+   split that figure is 0.0%.
+3. **A planned feature was deleted after being measured.** The intended fuel
+   proxy correlates with lap number at exactly -1.000, because within one race
+   they are the same quantity. Lap number already is the fuel control, which is
+   what makes the baseline comparison fair.
+
 ---
 
 ## Status
@@ -32,7 +55,7 @@ project reports both splits side by side to show the size of that illusion.
 | 4 | Stint-based split plus random-split control | Done |
 | 5 | Model comparison: baseline vs tire-aware | Done |
 | 6 | Figures | Done |
-| 7 | Write-up | Pending |
+| 7 | Write-up | Done |
 
 ---
 
@@ -68,19 +91,26 @@ filters on `year` without this fix returns zero rows.
 ## Repository layout
 
 ```
-data/raw/        Ergast CSV tables (not committed; see download script)
-scripts/         Dataset download
-src/             Reusable loading, cleaning and feature code
-notebooks/       Analysis notebook
-figures/         Generated plots
-results/         Model comparison tables
+data/raw/     Ergast CSV tables (not committed; rebuilt by the download script)
+scripts/      download_data.py
+src/          data_loader, race_selection, dataset, cleaning, features, splits, models
+notebooks/    00 environment .. 06 figures, one per phase, all executed
+figures/      seven generated plots
+results/      twelve CSV tables: race scoring, cleaning counts, model comparison
+```
+
+Every module in `src/` runs standalone and prints its own summary, so any stage
+can be checked without opening a notebook:
+
+```bash
+python src/race_selection.py
+python src/cleaning.py
+python src/models.py
 ```
 
 ---
 
 ## Methodology
-
-_Filled in as each phase completes._
 
 ### Race selection
 
@@ -433,7 +463,58 @@ not uniform.
 
 ## Limitations
 
-Pending.
+Stated plainly, because each one bounds what the results above can claim.
+
+**One race, so the findings are about this race.** Austin in 2019 was warm and
+abrasive. Degradation of 0.127s per lap is a property of that surface and those
+compounds, not a general constant. The method transfers; the number does not.
+
+**Tire compound is never observed.** The dataset records no compound, so
+`stint_number` stands in for it. That works because teams generally run softer
+tires earlier, but it conflates compound with race progress and with fuel load.
+A genuine compound column would separate them.
+
+**Fuel load cannot be isolated within one race.** Fuel burn, track evolution and
+lap number are the same monotonic quantity here, so the `lap` coefficient of
+-0.085s is their combined effect and cannot be decomposed further. Doing so
+needs multiple races.
+
+**The stint split forces extrapolation.** Final stints run longer than earlier
+ones, so 15 of 162 test laps sit beyond the training tire-age range of 25. This
+penalises RandomForest heavily and flatters linear regression's willingness to
+extend a straight line. It is an honest test, but it is not a neutral one
+between those two model families.
+
+**Eight drivers, 410 laps.** Small enough that per-driver results move around:
+the enhanced model wins for six of eight and loses to the baseline for two. The
+aggregate gain is real and it is not uniform.
+
+**Driver skill and traffic are unmodelled.** `grid` is a crude stand-in for car
+and driver pace, and nothing captures being stuck behind a slower car. Leclerc's
+held-out stint has the worst RMSE of the eight at 1.404s, and traffic is the
+most likely explanation.
+
+---
+
+## What I would do next
+
+In rough order of what would move the result most.
+
+1. **Repeat across a full season.** Fitting the same model to ten dry races
+   would separate fuel burn from track evolution, because the two scale
+   differently with race length, and would show whether 0.127s per lap is
+   typical or particular to Austin.
+2. **Join a compound source.** Compound is the single largest missing variable.
+   `stint_number` is a proxy that carries three confounded effects.
+3. **Model each driver's own baseline pace.** A per-driver intercept would
+   remove car and driver differences from the residuals and isolate degradation
+   more cleanly than `grid` does.
+4. **Add a traffic feature.** The gap to the car ahead, reconstructed from
+   position and lap time, would explain the residuals that currently look like
+   noise.
+5. **Test a model that extrapolates and bends.** Linear regression extends a
+   trend but cannot curve; RandomForest curves but cannot extend. A monotonic
+   spline or a simple parametric degradation curve would do both.
 
 ---
 
