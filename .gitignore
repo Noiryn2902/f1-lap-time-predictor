@@ -1,0 +1,15 @@
+# Dataset is downloaded by scripts/download_data.py, not committed.
+data/raw/
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
