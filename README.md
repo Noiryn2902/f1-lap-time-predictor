@@ -31,7 +31,7 @@ project reports both splits side by side to show the size of that illusion.
 | 3 | Feature engineering: tire age, stint, degradation shape | Done |
 | 4 | Stint-based split plus random-split control | Done |
 | 5 | Model comparison: baseline vs tire-aware | Done |
-| 6 | Figures | Pending |
+| 6 | Figures | Done |
 | 7 | Write-up | Pending |
 
 ---
@@ -388,6 +388,46 @@ so the marginal cost of one more lap falls only from 0.126s at age 1 to 0.119s
 at age 20. Degradation at this race is very nearly linear across the range
 observed. The term was worth including to test for a curve, and the honest
 result is that there is barely one.
+
+### Predicted against actual
+
+![Predicted vs actual, Hamilton's held-out stint](figures/06_predicted_vs_actual_stint.png)
+
+Hamilton's full race, with the shaded region showing what the models trained on
+and everything right of the red line held out. Three things are visible at once:
+
+- **The baseline, dotted grey, slopes the wrong way.** With no tire
+  information it can only follow fuel burn, so it predicts the car getting
+  steadily faster while it is in fact getting slower.
+- **The enhanced linear model, blue, gets the direction right** and tracks the
+  real upward drift across 31 unseen laps.
+- **RandomForest, gold, flattens completely from lap 44.** That is the
+  extrapolation limit made visible: beyond the training tire-age range the tree
+  returns its nearest leaf and stops following the trend, exactly where
+  degradation is steepest.
+
+![All eight drivers](figures/06_all_drivers_held_out.png)
+
+The same comparison for every driver, so the single-driver figure can be checked
+rather than trusted. `results/per_driver_rmse.csv` holds the numbers.
+
+| Code | Held-out stint | Test laps | Linear RMSE | Forest RMSE | Baseline RMSE |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| RIC | 2 | 34 | **0.590** | 0.510 | 0.673 |
+| NOR | 3 | 13 | **0.639** | 1.369 | 1.191 |
+| VER | 3 | 21 | **0.744** | 1.377 | 1.006 |
+| HAM | 2 | 31 | **0.790** | 1.046 | 1.146 |
+| ALB | 4 | 15 | **1.024** | 1.129 | 1.064 |
+| HUL | 3 | 15 | 1.043 | **0.981** | 1.334 |
+| BOT | 3 | 20 | 1.171 | 1.360 | **1.071** |
+| LEC | 3 | 13 | 1.404 | 1.567 | **1.344** |
+| | | **mean** | **0.926** | 1.167 | 1.104 |
+
+**The enhanced linear model wins for six of eight drivers**, against both the
+baseline and the forest. It loses to the baseline for Bottas and Leclerc, whose
+held-out stints are among the noisiest. Reporting six of eight rather than an
+aggregate alone is the honest form: the aggregate improvement is real, and it is
+not uniform.
 
 ---
 
