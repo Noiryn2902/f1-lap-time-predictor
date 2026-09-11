@@ -327,6 +327,4 @@ Verified by deleting every figure and CSV and re-running all seven notebooks
 from scratch. All pass, all 7 figures and 12 tables regenerate, and every
 headline number was checked against the regenerated outputs.
 
-REMOVEDUP
-extension that Windows Smart App Control blocks, which breaks every sklearn
-submodule import.
+Pinned versions and seed configs are tabled in the [README](README.md#pinned-versions-and-seeds).
